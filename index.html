@@ -118,6 +118,13 @@
 </div>
 
 <script>
+// Always use lowercase paths to avoid 404 on GitHub Pages
+const apps = {
+  browser: 'apps/browser.html',
+  music: 'apps/music.html',
+  settings: 'apps/settings.html'
+};
+
 function openApp(url) {
   document.getElementById('app-window').style.display = 'flex';
   document.getElementById('app-frame').src = url;
@@ -128,7 +135,7 @@ function closeApp() {
   document.getElementById('app-frame').src = '';
 }
 
-// Simple time updater
+// Update time every second
 setInterval(() => {
   const now = new Date();
   const h = now.getHours().toString().padStart(2,'0');
