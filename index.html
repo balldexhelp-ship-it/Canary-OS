@@ -11,14 +11,16 @@
     background: black;
     color: #00FF00;
     height: 100vh;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   #terminal {
-    padding: 20px;
-    height: 100%;
+    padding: 10px;
+    flex: 1;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   #output {
@@ -29,6 +31,8 @@
 
   #input-line {
     display: flex;
+    border-top: 1px solid #00FF00;
+    padding-top: 5px;
   }
 
   #input-line span {
@@ -42,6 +46,20 @@
     font-family: monospace;
     outline: none;
     flex: 1;
+    font-size: 1em;
+  }
+
+  /* Make input easier to tap on mobile */
+  #command-input:focus {
+    outline: 2px solid #00FF00;
+  }
+
+  /* Scrollbar style for output */
+  #output::-webkit-scrollbar {
+    width: 6px;
+  }
+  #output::-webkit-scrollbar-thumb {
+    background-color: #00FF00;
   }
 </style>
 </head>
@@ -49,12 +67,68 @@
 
 <div id="terminal">
   <div id="output">
-    Welcome to Canary-OS Terminal!
-    Type `help` for a list of commands.
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                    .......                                                         
+                                   .........:                                                       
+                                  ...........:      ::::                                            
+                                 .............:   ::::::::                                          
+                                ---------------- ::::::::::                                         
+                               ------------------:::::::::::                                        
+                              --------------------:::==-:::-=                                       
+                             ----------------------===========                                      
+                            ------------------------===========                                     
+                           --------------------------===========                                    
+                          ----------------------------===========                                   
+            @@@@@        ------------------------------===========        @@@@@      @@@@@@         
+          @@@   @@                                                      @@@  @@@@  @@@    @         
+         @@@        @@  @@@   @@@@@@@   @@ @@@@   @@@@@  @@  @@@       @@@    @@@  @@@@@@           
+         @@@        @@@@@@@   @@   @@   @@@@@@@   @@     @@@ @@        @@@    @@@     @@@@@         
+          @@@   @@ @@@  @@@   @@   @@  @@@  @@@   @@      @@@@          @@@   @@@  @@    @@         
+            @@@@@   @@@@@@@   @@   @@   @@@@@@@   @@       @@            @@@@@@     @@@@@@          
+                                                          @@@                                       
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+Welcome to Canary-OS Terminal!
+Type `help` for commands.
   </div>
+
   <div id="input-line">
     <span>&gt;</span>
-    <input id="command-input" type="text" autofocus>
+    <input id="command-input" type="text" autofocus placeholder="Type a command">
   </div>
 </div>
 
