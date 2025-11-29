@@ -16,10 +16,9 @@
   }
 
   #terminal {
-    padding: 10px;
-    flex: 1;
     display: flex;
     flex-direction: column;
+    height: 100%;
     overflow: hidden;
   }
 
@@ -27,12 +26,14 @@
     flex: 1;
     white-space: pre;
     overflow-y: auto;
+    padding: 5px;
+    margin: 0;
   }
 
   #input-line {
     display: flex;
     border-top: 1px solid #00FF00;
-    padding-top: 5px;
+    padding: 2px 5px;
   }
 
   #input-line span {
@@ -53,12 +54,14 @@
     outline: 2px solid #00FF00;
   }
 
+  /* Scrollbar style for output */
   #output::-webkit-scrollbar {
     width: 6px;
   }
   #output::-webkit-scrollbar-thumb {
     background-color: #00FF00;
   }
+
 </style>
 </head>
 <body>
@@ -69,7 +72,7 @@ Welcome to Canary-OS Terminal!
 Type `help` for commands.
 
 Commands available:
-- games → enter Games section
+- games → enter Games menu
 - clear → clears screen
   </div>
 
@@ -83,8 +86,13 @@ Commands available:
 const output = document.getElementById('output');
 const input = document.getElementById('command-input');
 
-let inGames = false;
+let currentSection = null; // null, "games", "tictactoe"
 let ticTacToeBoard = ['1','2','3','4','5','6','7','8','9'];
+
+function appendOutput(text) {
+  output.textContent += '\n' + text;
+  output.scrollTop = output.scrollHeight;
+}
 
 function displayBoard() {
   appendOutput(`
@@ -118,31 +126,12 @@ function computerMove() {
   ticTacToeBoard[move] = 'O';
 }
 
-function appendOutput(text) {
-  output.textContent += '\n' + text;
-  output.scrollTop = output.scrollHeight;
-}
-
 input.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') {
+  if(e.key==='Enter'){
     const command = input.value.toLowerCase().trim();
     input.value = '';
 
-    if(!inGames){
-      if(command === 'help'){
-        appendOutput('Commands available:\n- games\n- clear');
-      } else if(command === 'clear'){
-        output.textContent = '';
-      } else if(command === 'games'){
-        inGames = true;
-        ticTacToeBoard = ['1','2','3','4','5','6','7','8','9'];
-        appendOutput('Welcome to Tic Tac Toe!\nYou are X, computer is O.\nType user/place=NUM to place your X.\nExample: user/place=5\nBoard positions are 1 to 9:');
-        displayBoard();
-      } else {
-        appendOutput('Unknown command: ' + command);
-      }
-    } else {
-      // Tic Tac Toe section
+    if(currentSection === "tictactoe") {
       if(command.startsWith('user/place=')){
         const num = parseInt(command.split('=')[1])-1;
         if(isNaN(num) || num<0 || num>8){
@@ -160,7 +149,7 @@ input.addEventListener('keydown', function(e) {
           if(winner==='X') appendOutput('You won!');
           else if(winner==='O') appendOutput('Computer won!');
           else appendOutput('It\'s a tie!');
-          inGames=false;
+          currentSection = null;
           return;
         }
         computerMove();
@@ -170,15 +159,36 @@ input.addEventListener('keydown', function(e) {
           if(winner==='X') appendOutput('You won!');
           else if(winner==='O') appendOutput('Computer won!');
           else appendOutput('It\'s a tie!');
-          inGames=false;
+          currentSection = null;
           return;
         }
       } else if(command==='exit'){
-        inGames=false;
-        appendOutput('Exited Games section.');
+        currentSection = null;
+        appendOutput('Exited Tic Tac Toe.');
       } else {
-        appendOutput('Unknown command in Games. Use user/place=NUM or exit');
+        appendOutput('Unknown command in Tic Tac Toe. Use user/place=NUM or exit');
       }
+      return;
+    }
+
+    if(command==='help'){
+      appendOutput('Global commands:\n- games\n- clear');
+    } else if(command==='clear'){
+      output.textContent='';
+    } else if(command==='games'){
+      currentSection = 'games';
+      appendOutput('Games Menu:\n1. Tic Tac Toe\n2. Guess Number (coming soon)\n3. Rock Paper Scissors (coming soon)\nType the game name to play.');
+    } else if(currentSection==='games'){
+      if(command==='tictactoe'){
+        currentSection = 'tictactoe';
+        ticTacToeBoard = ['1','2','3','4','5','6','7','8','9'];
+        appendOutput('Welcome to Tic Tac Toe!\nYou are X, computer is O.\nType user/place=NUM to place your X.\nBoard positions 1 to 9:');
+        displayBoard();
+      } else {
+        appendOutput('Unknown game. Available games: tictactoe');
+      }
+    } else {
+      appendOutput('Unknown command: ' + command);
     }
   }
 });
