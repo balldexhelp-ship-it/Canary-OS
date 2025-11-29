@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Phone OS</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  background-size: cover;
+  height: 100vh;
+  overflow: hidden;
+}
+#status {
+  width: 100%;
+  height: 40px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-size: 14px;
+}
+#home {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  padding: 30px;
+}
+.app {
+  width: 60px;
+  height: 60px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(6px);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.app:active {
+  transform: scale(0.9);
+}
+#window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: none;
+}
+#window iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+#closeBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255,255,255,0.3);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="status">
+  <span id="clock"></span>
+  <span>📶 🔋</span>
+</div>
+
+<div id="home">
+  <div class="app" onclick="openApp('browser.html')">🌐</div>
+  <div class="app" onclick="openApp('notes.html')">📝</div>
+  <div class="app" onclick="openApp('settings.html')">⚙️</div>
+</div>
+
+<div id="window">
+  <button id="closeBtn" onclick="closeApp()">Close</button>
+  <iframe id="appFrame"></iframe>
+</div>
+
+<script>
+function clockTick() {
+  const t = new Date();
+  let h = t.getHours();
+  let m = t.getMinutes();
+  if(m < 10) m = "0" + m;
+  document.getElementById("clock").textContent = h + ":" + m;
+}
+setInterval(clockTick, 500);
+clockTick();
+
+function openApp(src) {
+  document.getElementById("window").style.display = "block";
+  document.getElementById("appFrame").src = "apps/" + src;
+}
+function closeApp() {
+  document.getElementById("window").style.display = "none";
+  document.getElementById("appFrame").src = "";
+}
+</script>
+
+</body>
+</html>
