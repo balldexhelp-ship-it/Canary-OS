@@ -14,32 +14,24 @@
     display: flex;
     flex-direction: column;
   }
-
   #terminal {
     display: flex;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
   }
-
   #output {
     flex: 1;
     white-space: pre;
     overflow-y: auto;
     padding: 5px;
-    margin: 0;
   }
-
   #input-line {
     display: flex;
     border-top: 1px solid #00FF00;
     padding: 2px 5px;
   }
-
-  #input-line span {
-    margin-right: 5px;
-  }
-
+  #input-line span { margin-right: 5px; }
   #command-input {
     background: black;
     border: none;
@@ -49,18 +41,9 @@
     flex: 1;
     font-size: 1em;
   }
-
-  #command-input:focus {
-    outline: 2px solid #00FF00;
-  }
-
-  #output::-webkit-scrollbar {
-    width: 6px;
-  }
-  #output::-webkit-scrollbar-thumb {
-    background-color: #00FF00;
-  }
-
+  #command-input:focus { outline: 2px solid #00FF00; }
+  #output::-webkit-scrollbar { width: 6px; }
+  #output::-webkit-scrollbar-thumb { background-color: #00FF00; }
 </style>
 </head>
 <body>
@@ -68,11 +51,13 @@
 <div id="terminal">
   <div id="output">
 Welcome to Canary-OS Terminal!
-Type `help` for commands.
+Type `help` for global commands.
 
-Commands available:
-- games → enter Games menu
-- clear → clears screen
+Global commands:
+- games → open games menu
+- apps → open apps menu
+- clear → clear screen
+- exit → exit current section
   </div>
 
   <div id="input-line">
@@ -85,23 +70,27 @@ Commands available:
 const output = document.getElementById('output');
 const input = document.getElementById('command-input');
 
-let currentSection = null; // null, "games", "tictactoe", "guessnumber", "rps"
-
-// Tic Tac Toe variables
+let currentSection = null; // null, 'games', 'apps', 'tictactoe', 'guessnumber', 'rps', 'notes', 'calc', 'fs', 'ascii', 'clock'
 let ticTacToeBoard = ['1','2','3','4','5','6','7','8','9'];
-
-// Guess Number variables
 let guessNumberTarget = null;
-
-// Rock Paper Scissors variables
+let notesList = [];
+let fsFiles = {'readme.txt': 'Welcome to Canary-OS FS!\n', 'todo.txt': '1. Buy milk\n2. Finish project\n'};
 const rpsOptions = ['rock','paper','scissors'];
+const asciiArts = [
+`  /\\_/\\  
+ ( o.o ) 
+  > ^ < `,
+`  __
+ /  \\
+| () |
+ \\__/`];
 
 function appendOutput(text) {
   output.textContent += '\n' + text;
   output.scrollTop = output.scrollHeight;
 }
 
-// ---------- Tic Tac Toe functions ----------
+// ---------- Tic Tac Toe ----------
 function displayTicTacToe() {
   appendOutput(`
  ${ticTacToeBoard[0]} | ${ticTacToeBoard[1]} | ${ticTacToeBoard[2]}
@@ -114,144 +103,132 @@ function displayTicTacToe() {
 
 function checkTicTacToeWinner() {
   const b = ticTacToeBoard;
-  const lines = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-  for(const line of lines){
-    const [a,b1,c] = line;
-    if(b[a]===b[b1] && b[a]===b[c]) return b[a];
-  }
-  if(!b.some(c => c !== 'X' && c !== 'O')) return 'Tie';
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for (const [a,b1,c] of lines) if (b[a]===b[b1] && b[a]===b[c]) return b[a];
+  if (!b.some(x=>x!=='X'&&x!=='O')) return 'Tie';
   return null;
 }
 
 function ticTacToeComputerMove() {
-  const available = ticTacToeBoard.map((v,i)=> (v!=='X' && v!=='O') ? i : null).filter(v=>v!==null);
-  if(available.length===0) return;
-  const move = available[Math.floor(Math.random()*available.length)];
-  ticTacToeBoard[move] = 'O';
+  const avail = ticTacToeBoard.map((v,i)=>v!=='X'&&v!=='O'?i:null).filter(i=>i!==null);
+  if (avail.length===0) return;
+  ticTacToeBoard[avail[Math.floor(Math.random()*avail.length)]]='O';
 }
 
-// ---------- Input handler ----------
-input.addEventListener('keydown', function(e){
+// ---------- Input Handler ----------
+input.addEventListener('keydown', e=>{
   if(e.key!=='Enter') return;
-  const command = input.value.toLowerCase().trim();
-  input.value = '';
+  const cmd = input.value.trim();
+  input.value='';
 
-  // --- Tic Tac Toe section ---
+  // --- Tic Tac Toe ---
   if(currentSection==='tictactoe'){
-    if(command.startsWith('user/place=')){
-      const num = parseInt(command.split('=')[1])-1;
-      if(isNaN(num) || num<0 || num>8){
-        appendOutput('Invalid number! Use 1 to 9.');
-        return;
-      }
-      if(ticTacToeBoard[num]==='X' || ticTacToeBoard[num]==='O'){
-        appendOutput('That space is already taken.');
-        return;
-      }
-      ticTacToeBoard[num]='X';
+    if(cmd.startsWith('user/place=')){
+      const n=parseInt(cmd.split('=')[1])-1;
+      if(isNaN(n)||n<0||n>8){ appendOutput('Invalid cell. Use 1-9'); return; }
+      if(ticTacToeBoard[n]==='X'||ticTacToeBoard[n]==='O'){ appendOutput('Cell taken'); return; }
+      ticTacToeBoard[n]='X';
       let winner = checkTicTacToeWinner();
-      if(winner){
-        displayTicTacToe();
-        if(winner==='X') appendOutput('You won!');
-        else if(winner==='O') appendOutput('Computer won!');
-        else appendOutput('It\'s a tie!');
-        currentSection = null;
-        return;
-      }
+      if(winner){ displayTicTacToe(); appendOutput(winner==='X'?'You won!':winner==='O'?'Computer won!':'Tie!'); currentSection=null; return; }
       ticTacToeComputerMove();
       winner = checkTicTacToeWinner();
       displayTicTacToe();
-      if(winner){
-        if(winner==='X') appendOutput('You won!');
-        else if(winner==='O') appendOutput('Computer won!');
-        else appendOutput('It\'s a tie!');
-        currentSection = null;
-        return;
-      }
-    } else if(command==='exit'){
-      currentSection = null;
-      appendOutput('Exited Tic Tac Toe.');
-    } else {
-      appendOutput('Unknown command in Tic Tac Toe. Use user/place=NUM or exit.');
-    }
+      if(winner){ appendOutput(winner==='X'?'You won!':winner==='O'?'Computer won!':'Tie!'); currentSection=null; return; }
+    } else if(cmd==='exit'){ currentSection=null; appendOutput('Exited Tic Tac Toe.'); }
+    else appendOutput('Use user/place=NUM or exit');
     return;
   }
 
-  // --- Guess Number section ---
+  // --- Guess Number ---
   if(currentSection==='guessnumber'){
-    if(command==='exit'){
-      currentSection=null;
-      appendOutput('Exited Guess Number.');
-      return;
-    }
-    const guess = parseInt(command);
-    if(isNaN(guess)){
-      appendOutput('Type a number between 1 and 100, or exit.');
-      return;
-    }
-    if(guess<guessNumberTarget) appendOutput('Too low!');
-    else if(guess>guessNumberTarget) appendOutput('Too high!');
-    else{
-      appendOutput('Correct! You guessed the number!');
-      currentSection=null;
-    }
+    if(cmd==='exit'){ currentSection=null; appendOutput('Exited Guess Number.'); return; }
+    const g=parseInt(cmd);
+    if(isNaN(g)){ appendOutput('Type a number 1-100 or exit'); return; }
+    if(g<guessNumberTarget) appendOutput('Too low!');
+    else if(g>guessNumberTarget) appendOutput('Too high!');
+    else{ appendOutput('Correct!'); currentSection=null; }
     return;
   }
 
-  // --- Rock Paper Scissors section ---
+  // --- RPS ---
   if(currentSection==='rps'){
-    if(command==='exit'){
-      currentSection=null;
-      appendOutput('Exited Rock Paper Scissors.');
-      return;
-    }
-    if(!rpsOptions.includes(command)){
-      appendOutput('Type rock, paper, or scissors, or exit.');
-      return;
-    }
-    const compChoice = rpsOptions[Math.floor(Math.random()*3)];
-    appendOutput(`Computer chose: ${compChoice}`);
-    if(command===compChoice) appendOutput('It\'s a tie!');
-    else if(
-      (command==='rock' && compChoice==='scissors')||
-      (command==='paper' && compChoice==='rock')||
-      (command==='scissors' && compChoice==='paper')
-    ) appendOutput('You win!');
-    else appendOutput('You lose!');
+    if(cmd==='exit'){ currentSection=null; appendOutput('Exited RPS.'); return; }
+    if(!rpsOptions.includes(cmd)){ appendOutput('Type rock, paper, scissors or exit'); return; }
+    const c=rpsOptions[Math.floor(Math.random()*3)];
+    appendOutput(`Computer chose: ${c}`);
+    if(cmd===c) appendOutput("Tie!");
+    else if((cmd==='rock'&&c==='scissors')||(cmd==='paper'&&c==='rock')||(cmd==='scissors'&&c==='paper')) appendOutput("You win!");
+    else appendOutput("You lose!");
     return;
+  }
+
+  // --- Notes ---
+  if(currentSection==='notes'){
+    if(cmd==='exit'){ currentSection=null; appendOutput('Exited Notes.'); return; }
+    if(cmd.startsWith('notes create ')){
+      const text=cmd.slice(13).replace(/^"|"$/g,'');
+      notesList.push(text); appendOutput('Note added'); return;
+    }
+    if(cmd==='notes list'){ notesList.forEach((n,i)=>appendOutput(`${i+1}: ${n}`)); return; }
+    if(cmd.startsWith('notes read ')){ const i=parseInt(cmd.split(' ')[2])-1; appendOutput(notesList[i]||'No note'); return; }
+    if(cmd.startsWith('notes delete ')){ const i=parseInt(cmd.split(' ')[2])-1; if(notesList[i]){notesList.splice(i,1); appendOutput('Deleted')} else appendOutput('No note'); return; }
+    appendOutput('Notes commands: create "text", list, read num, delete num, exit');
+    return;
+  }
+
+  // --- Calculator ---
+  if(currentSection==='calc'){
+    if(cmd==='exit'){ currentSection=null; appendOutput('Exited Calculator.'); return; }
+    try{ appendOutput(eval(cmd).toString()); }catch(e){ appendOutput('Invalid math'); }
+    return;
+  }
+
+  // --- File System ---
+  if(currentSection==='fs'){
+    if(cmd==='exit'){ currentSection=null; appendOutput('Exited FS.'); return; }
+    if(cmd==='ls'){ appendOutput(Object.keys(fsFiles).join('\n')); return; }
+    if(cmd.startsWith('cat ')){ const f=cmd.slice(4); appendOutput(fsFiles[f]||'No such file'); return; }
+    if(cmd.startsWith('mkdir ')){ const f=cmd.slice(6); fsFiles[f] = ''; appendOutput(`Folder ${f} created`); return; }
+    appendOutput('FS commands: ls, cat filename, mkdir foldername, exit'); return;
+  }
+
+  // --- ASCII Art ---
+  if(currentSection==='ascii'){
+    if(cmd==='exit'){ currentSection=null; appendOutput('Exited ASCII'); return; }
+    if(cmd==='ascii list'){ asciiArts.forEach((a,i)=>appendOutput(`${i+1}: preview`)); return; }
+    if(cmd.startsWith('ascii view ')){ const i=parseInt(cmd.split(' ')[2])-1; appendOutput(asciiArts[i]||'No art'); return; }
+    appendOutput('ASCII commands: list, view num, exit'); return;
+  }
+
+  // --- Clock / Timer ---
+  if(currentSection==='clock'){
+    if(cmd==='exit'){ currentSection=null; appendOutput('Exited Clock'); return; }
+    if(cmd==='time'){ appendOutput(new Date().toLocaleTimeString()); return; }
+    if(cmd.startsWith('timer ')){ const sec=parseInt(cmd.split(' ')[1]); appendOutput(`Timer ${sec}s started`); setTimeout(()=>appendOutput('Timer done!'),sec*1000); return; }
+    appendOutput('Clock commands: time, timer X, exit'); return;
   }
 
   // --- Global commands ---
-  if(command==='help'){
-    appendOutput('Global commands:\n- games\n- clear\n- exit');
-  } else if(command==='clear'){
-    output.textContent='';
-  } else if(command==='games'){
-    currentSection='games';
-    appendOutput('Games Menu:\n1. Tic Tac Toe\n2. Guess Number\n3. Rock Paper Scissors\nType the game name to play.');
-  } else if(currentSection==='games'){
-    if(command==='tictactoe'){
-      currentSection='tictactoe';
-      ticTacToeBoard=['1','2','3','4','5','6','7','8','9'];
-      appendOutput('Tic Tac Toe!\nYou are X, computer is O.\nUse user/place=NUM to place X.\nBoard positions 1 to 9:');
-      displayTicTacToe();
-    } else if(command==='guess number'){
-      currentSection='guessnumber';
-      guessNumberTarget = Math.floor(Math.random()*100)+1;
-      appendOutput('Guess Number!\nType a number between 1 and 100. Type exit to leave.');
-    } else if(command==='rock paper scissors'){
-      currentSection='rps';
-      appendOutput('Rock Paper Scissors!\nType rock, paper, or scissors. Type exit to leave.');
-    } else {
-      appendOutput('Unknown game. Available games: tictactoe, guess number, rock paper scissors.');
-    }
-  } else {
-    appendOutput('Unknown command: ' + command);
+  if(cmd==='help'){ appendOutput('Global: help, games, apps, clear, exit'); }
+  else if(cmd==='clear'){ output.textContent=''; }
+  else if(cmd==='games'){ currentSection='games'; appendOutput('Games:\n1. Tic Tac Toe\n2. Guess Number\n3. Rock Paper Scissors\nType the game name to start.'); }
+  else if(cmd==='apps'){ currentSection='apps'; appendOutput('Apps:\n1. Notes\n2. Calculator\n3. File System\n4. ASCII Viewer\n5. Clock\n6. Sysinfo\nType the app name to start.'); }
+  else if(currentSection==='games'){
+    if(cmd==='tic tac toe'){ currentSection='tictactoe'; ticTacToeBoard=['1','2','3','4','5','6','7','8','9']; appendOutput('Tic Tac Toe!\nUse user/place=NUM'); displayTicTacToe(); }
+    else if(cmd==='guess number'){ currentSection='guessnumber'; guessNumberTarget=Math.floor(Math.random()*100)+1; appendOutput('Guess Number 1-100'); }
+    else if(cmd==='rock paper scissors'){ currentSection='rps'; appendOutput('Rock Paper Scissors! Type rock, paper, scissors'); }
+    else appendOutput('Unknown game'); 
   }
+  else if(currentSection==='apps'){
+    if(cmd==='notes'){ currentSection='notes'; appendOutput('Notes App: create "text", list, read num, delete num'); }
+    else if(cmd==='calculator'){ currentSection='calc'; appendOutput('Calculator App. Type math or exit'); }
+    else if(cmd==='file system'){ currentSection='fs'; appendOutput('FS App: ls, cat filename, mkdir foldername'); }
+    else if(cmd==='ascii'){ currentSection='ascii'; appendOutput('ASCII Viewer: list, view num, exit'); }
+    else if(cmd==='clock'){ currentSection='clock'; appendOutput('Clock App: time, timer X, exit'); }
+    else if(cmd==='sysinfo'){ appendOutput('Canary-OS v2.0\nUptime: unknown\nMemory: 512MB\nVersion: ASCII Edition'); }
+    else appendOutput('Unknown app');
+  }
+  else appendOutput('Unknown command. Type help.');
 });
 </script>
 
