@@ -49,12 +49,10 @@
     font-size: 1em;
   }
 
-  /* Make input easier to tap on mobile */
   #command-input:focus {
     outline: 2px solid #00FF00;
   }
 
-  /* Scrollbar style for output */
   #output::-webkit-scrollbar {
     width: 6px;
   }
@@ -67,63 +65,12 @@
 
 <div id="terminal">
   <div id="output">
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                    .......                                                         
-                                   .........:                                                       
-                                  ...........:      ::::                                            
-                                 .............:   ::::::::                                          
-                                ---------------- ::::::::::                                         
-                               ------------------:::::::::::                                        
-                              --------------------:::==-:::-=                                       
-                             ----------------------===========                                      
-                            ------------------------===========                                     
-                           --------------------------===========                                    
-                          ----------------------------===========                                   
-            @@@@@        ------------------------------===========        @@@@@      @@@@@@         
-          @@@   @@                                                      @@@  @@@@  @@@    @         
-         @@@        @@  @@@   @@@@@@@   @@ @@@@   @@@@@  @@  @@@       @@@    @@@  @@@@@@           
-         @@@        @@@@@@@   @@   @@   @@@@@@@   @@     @@@ @@        @@@    @@@     @@@@@         
-          @@@   @@ @@@  @@@   @@   @@  @@@  @@@   @@      @@@@          @@@   @@@  @@    @@         
-            @@@@@   @@@@@@@   @@   @@   @@@@@@@   @@       @@            @@@@@@     @@@@@@          
-                                                          @@@                                       
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
 Welcome to Canary-OS Terminal!
 Type `help` for commands.
+
+Commands available:
+- games → enter Games section
+- clear → clears screen
   </div>
 
   <div id="input-line">
@@ -136,29 +83,40 @@ Type `help` for commands.
 const output = document.getElementById('output');
 const input = document.getElementById('command-input');
 
-const apps = {
-  browser: `
-   ____  _               _                 
-  | __ )| |__   ___  ___| | _____ _ __ ___ 
-  |  _ \\| '_ \\ / _ \\/ __| |/ / _ \\ '__/ __|
-  | |_) | | | |  __/ (__|   <  __/ |  \\__ \\
-  |____/|_| |_|\\___|\\___|_|\\_\\___|_|  |___/
-  `,
-  music: `
-   __  __           _       
-  |  \\/  | ___   __| | ___  
-  | |\\/| |/ _ \\ / _\` |/ _ \\ 
-  | |  | | (_) | (_| |  __/ 
-  |_|  |_|\\___/ \\__,_|\\___| 
-  `,
-  settings: `
-    ____       _   _                 
-   / ___|  ___| |_| |_ ___ _ __ ___  
-   \\___ \\ / _ \\ __| __/ _ \\ '__/ __| 
-    ___) |  __/ |_| ||  __/ |  \\__ \\ 
-   |____/ \\___|\\__|\\__\\___|_|  |___/
-  `
-};
+let inGames = false;
+let ticTacToeBoard = ['1','2','3','4','5','6','7','8','9'];
+
+function displayBoard() {
+  appendOutput(`
+ ${ticTacToeBoard[0]} | ${ticTacToeBoard[1]} | ${ticTacToeBoard[2]}
+---+---+---
+ ${ticTacToeBoard[3]} | ${ticTacToeBoard[4]} | ${ticTacToeBoard[5]}
+---+---+---
+ ${ticTacToeBoard[6]} | ${ticTacToeBoard[7]} | ${ticTacToeBoard[8]}
+`);
+}
+
+function checkWinner() {
+  const b = ticTacToeBoard;
+  const lines = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+  for(const line of lines){
+    const [a,b1,c] = line;
+    if(b[a]===b[b1] && b[a]===b[c]) return b[a];
+  }
+  if(!b.some(c => c !== 'X' && c !== 'O')) return 'Tie';
+  return null;
+}
+
+function computerMove() {
+  const available = ticTacToeBoard.map((v,i)=> (v!=='X' && v!=='O') ? i : null).filter(v=>v!==null);
+  if(available.length===0) return;
+  const move = available[Math.floor(Math.random()*available.length)];
+  ticTacToeBoard[move] = 'O';
+}
 
 function appendOutput(text) {
   output.textContent += '\n' + text;
@@ -169,14 +127,58 @@ input.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     const command = input.value.toLowerCase().trim();
     input.value = '';
-    if(command === 'help') {
-      appendOutput('Commands:\n- browser\n- music\n- settings\n- clear');
-    } else if (command === 'clear') {
-      output.textContent = '';
-    } else if (apps[command]) {
-      appendOutput(apps[command]);
+
+    if(!inGames){
+      if(command === 'help'){
+        appendOutput('Commands available:\n- games\n- clear');
+      } else if(command === 'clear'){
+        output.textContent = '';
+      } else if(command === 'games'){
+        inGames = true;
+        ticTacToeBoard = ['1','2','3','4','5','6','7','8','9'];
+        appendOutput('Welcome to Tic Tac Toe!\nYou are X, computer is O.\nType user/place=NUM to place your X.\nExample: user/place=5\nBoard positions are 1 to 9:');
+        displayBoard();
+      } else {
+        appendOutput('Unknown command: ' + command);
+      }
     } else {
-      appendOutput(`Unknown command: ${command}`);
+      // Tic Tac Toe section
+      if(command.startsWith('user/place=')){
+        const num = parseInt(command.split('=')[1])-1;
+        if(isNaN(num) || num<0 || num>8){
+          appendOutput('Invalid number! Use 1 to 9 for available spaces.');
+          return;
+        }
+        if(ticTacToeBoard[num]==='X' || ticTacToeBoard[num]==='O'){
+          appendOutput('That space is already taken.');
+          return;
+        }
+        ticTacToeBoard[num] = 'X';
+        let winner = checkWinner();
+        if(winner){
+          displayBoard();
+          if(winner==='X') appendOutput('You won!');
+          else if(winner==='O') appendOutput('Computer won!');
+          else appendOutput('It\'s a tie!');
+          inGames=false;
+          return;
+        }
+        computerMove();
+        winner = checkWinner();
+        displayBoard();
+        if(winner){
+          if(winner==='X') appendOutput('You won!');
+          else if(winner==='O') appendOutput('Computer won!');
+          else appendOutput('It\'s a tie!');
+          inGames=false;
+          return;
+        }
+      } else if(command==='exit'){
+        inGames=false;
+        appendOutput('Exited Games section.');
+      } else {
+        appendOutput('Unknown command in Games. Use user/place=NUM or exit');
+      }
     }
   }
 });
