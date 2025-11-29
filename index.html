@@ -54,7 +54,6 @@
     outline: 2px solid #00FF00;
   }
 
-  /* Scrollbar style for output */
   #output::-webkit-scrollbar {
     width: 6px;
   }
@@ -86,15 +85,24 @@ Commands available:
 const output = document.getElementById('output');
 const input = document.getElementById('command-input');
 
-let currentSection = null; // null, "games", "tictactoe"
+let currentSection = null; // null, "games", "tictactoe", "guessnumber", "rps"
+
+// Tic Tac Toe variables
 let ticTacToeBoard = ['1','2','3','4','5','6','7','8','9'];
+
+// Guess Number variables
+let guessNumberTarget = null;
+
+// Rock Paper Scissors variables
+const rpsOptions = ['rock','paper','scissors'];
 
 function appendOutput(text) {
   output.textContent += '\n' + text;
   output.scrollTop = output.scrollHeight;
 }
 
-function displayBoard() {
+// ---------- Tic Tac Toe functions ----------
+function displayTicTacToe() {
   appendOutput(`
  ${ticTacToeBoard[0]} | ${ticTacToeBoard[1]} | ${ticTacToeBoard[2]}
 ---+---+---
@@ -104,7 +112,7 @@ function displayBoard() {
 `);
 }
 
-function checkWinner() {
+function checkTicTacToeWinner() {
   const b = ticTacToeBoard;
   const lines = [
     [0,1,2],[3,4,5],[6,7,8],
@@ -119,77 +127,130 @@ function checkWinner() {
   return null;
 }
 
-function computerMove() {
+function ticTacToeComputerMove() {
   const available = ticTacToeBoard.map((v,i)=> (v!=='X' && v!=='O') ? i : null).filter(v=>v!==null);
   if(available.length===0) return;
   const move = available[Math.floor(Math.random()*available.length)];
   ticTacToeBoard[move] = 'O';
 }
 
-input.addEventListener('keydown', function(e) {
-  if(e.key==='Enter'){
-    const command = input.value.toLowerCase().trim();
-    input.value = '';
+// ---------- Input handler ----------
+input.addEventListener('keydown', function(e){
+  if(e.key!=='Enter') return;
+  const command = input.value.toLowerCase().trim();
+  input.value = '';
 
-    if(currentSection === "tictactoe") {
-      if(command.startsWith('user/place=')){
-        const num = parseInt(command.split('=')[1])-1;
-        if(isNaN(num) || num<0 || num>8){
-          appendOutput('Invalid number! Use 1 to 9 for available spaces.');
-          return;
-        }
-        if(ticTacToeBoard[num]==='X' || ticTacToeBoard[num]==='O'){
-          appendOutput('That space is already taken.');
-          return;
-        }
-        ticTacToeBoard[num] = 'X';
-        let winner = checkWinner();
-        if(winner){
-          displayBoard();
-          if(winner==='X') appendOutput('You won!');
-          else if(winner==='O') appendOutput('Computer won!');
-          else appendOutput('It\'s a tie!');
-          currentSection = null;
-          return;
-        }
-        computerMove();
-        winner = checkWinner();
-        displayBoard();
-        if(winner){
-          if(winner==='X') appendOutput('You won!');
-          else if(winner==='O') appendOutput('Computer won!');
-          else appendOutput('It\'s a tie!');
-          currentSection = null;
-          return;
-        }
-      } else if(command==='exit'){
-        currentSection = null;
-        appendOutput('Exited Tic Tac Toe.');
-      } else {
-        appendOutput('Unknown command in Tic Tac Toe. Use user/place=NUM or exit');
+  // --- Tic Tac Toe section ---
+  if(currentSection==='tictactoe'){
+    if(command.startsWith('user/place=')){
+      const num = parseInt(command.split('=')[1])-1;
+      if(isNaN(num) || num<0 || num>8){
+        appendOutput('Invalid number! Use 1 to 9.');
+        return;
       }
+      if(ticTacToeBoard[num]==='X' || ticTacToeBoard[num]==='O'){
+        appendOutput('That space is already taken.');
+        return;
+      }
+      ticTacToeBoard[num]='X';
+      let winner = checkTicTacToeWinner();
+      if(winner){
+        displayTicTacToe();
+        if(winner==='X') appendOutput('You won!');
+        else if(winner==='O') appendOutput('Computer won!');
+        else appendOutput('It\'s a tie!');
+        currentSection = null;
+        return;
+      }
+      ticTacToeComputerMove();
+      winner = checkTicTacToeWinner();
+      displayTicTacToe();
+      if(winner){
+        if(winner==='X') appendOutput('You won!');
+        else if(winner==='O') appendOutput('Computer won!');
+        else appendOutput('It\'s a tie!');
+        currentSection = null;
+        return;
+      }
+    } else if(command==='exit'){
+      currentSection = null;
+      appendOutput('Exited Tic Tac Toe.');
+    } else {
+      appendOutput('Unknown command in Tic Tac Toe. Use user/place=NUM or exit.');
+    }
+    return;
+  }
+
+  // --- Guess Number section ---
+  if(currentSection==='guessnumber'){
+    if(command==='exit'){
+      currentSection=null;
+      appendOutput('Exited Guess Number.');
       return;
     }
-
-    if(command==='help'){
-      appendOutput('Global commands:\n- games\n- clear');
-    } else if(command==='clear'){
-      output.textContent='';
-    } else if(command==='games'){
-      currentSection = 'games';
-      appendOutput('Games Menu:\n1. Tic Tac Toe\n2. Guess Number (coming soon)\n3. Rock Paper Scissors (coming soon)\nType the game name to play.');
-    } else if(currentSection==='games'){
-      if(command==='tictactoe'){
-        currentSection = 'tictactoe';
-        ticTacToeBoard = ['1','2','3','4','5','6','7','8','9'];
-        appendOutput('Welcome to Tic Tac Toe!\nYou are X, computer is O.\nType user/place=NUM to place your X.\nBoard positions 1 to 9:');
-        displayBoard();
-      } else {
-        appendOutput('Unknown game. Available games: tictactoe');
-      }
-    } else {
-      appendOutput('Unknown command: ' + command);
+    const guess = parseInt(command);
+    if(isNaN(guess)){
+      appendOutput('Type a number between 1 and 100, or exit.');
+      return;
     }
+    if(guess<guessNumberTarget) appendOutput('Too low!');
+    else if(guess>guessNumberTarget) appendOutput('Too high!');
+    else{
+      appendOutput('Correct! You guessed the number!');
+      currentSection=null;
+    }
+    return;
+  }
+
+  // --- Rock Paper Scissors section ---
+  if(currentSection==='rps'){
+    if(command==='exit'){
+      currentSection=null;
+      appendOutput('Exited Rock Paper Scissors.');
+      return;
+    }
+    if(!rpsOptions.includes(command)){
+      appendOutput('Type rock, paper, or scissors, or exit.');
+      return;
+    }
+    const compChoice = rpsOptions[Math.floor(Math.random()*3)];
+    appendOutput(`Computer chose: ${compChoice}`);
+    if(command===compChoice) appendOutput('It\'s a tie!');
+    else if(
+      (command==='rock' && compChoice==='scissors')||
+      (command==='paper' && compChoice==='rock')||
+      (command==='scissors' && compChoice==='paper')
+    ) appendOutput('You win!');
+    else appendOutput('You lose!');
+    return;
+  }
+
+  // --- Global commands ---
+  if(command==='help'){
+    appendOutput('Global commands:\n- games\n- clear\n- exit');
+  } else if(command==='clear'){
+    output.textContent='';
+  } else if(command==='games'){
+    currentSection='games';
+    appendOutput('Games Menu:\n1. Tic Tac Toe\n2. Guess Number\n3. Rock Paper Scissors\nType the game name to play.');
+  } else if(currentSection==='games'){
+    if(command==='tictactoe'){
+      currentSection='tictactoe';
+      ticTacToeBoard=['1','2','3','4','5','6','7','8','9'];
+      appendOutput('Tic Tac Toe!\nYou are X, computer is O.\nUse user/place=NUM to place X.\nBoard positions 1 to 9:');
+      displayTicTacToe();
+    } else if(command==='guess number'){
+      currentSection='guessnumber';
+      guessNumberTarget = Math.floor(Math.random()*100)+1;
+      appendOutput('Guess Number!\nType a number between 1 and 100. Type exit to leave.');
+    } else if(command==='rock paper scissors'){
+      currentSection='rps';
+      appendOutput('Rock Paper Scissors!\nType rock, paper, or scissors. Type exit to leave.');
+    } else {
+      appendOutput('Unknown game. Available games: tictactoe, guess number, rock paper scissors.');
+    }
+  } else {
+    appendOutput('Unknown command: ' + command);
   }
 });
 </script>
